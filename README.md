@@ -7,10 +7,12 @@ Fork of [BlenderMCP](https://github.com/ahujasid/blender-mcp) by Siddharth Ahuja
 ## Features
 
 - TCP socket server inside Blender; JSON command protocol on port 9876 (configurable)
+- Auto-connects on Blender launch (toggle in addon preferences)
 - Create, modify, delete objects; apply materials; inspect scene and per-object data
 - Run arbitrary Python inside Blender from the client
 - Capture viewport screenshots
 - Optional asset integrations: Poly Haven, Sketchfab, Hyper3D Rodin, Tencent Hunyuan 3D
+- No telemetry. The addon makes no outbound HTTP requests unless you opt into an asset integration
 
 ## Architecture
 
@@ -106,10 +108,11 @@ Run only one MCP server at a time. If both Cursor and Claude Desktop launch one,
 
 ![BlenderMCP in the sidebar](assets/addon-instructions.png)
 
-1. In Blender, open the 3D View sidebar (`N`) and select **BlenderMCP**.
-2. Set the port and toggle whichever asset integrations you want.
-3. Click **Connect to MCP server**.
-4. Start your MCP client. Tools appear under the hammer icon.
+1. Enable the addon. The MCP server starts automatically on the configured port (default 9876). To opt out of autostart, uncheck **Auto-connect on Blender launch** in the addon preferences.
+2. In the 3D View sidebar (`N`) under **BlenderMCP**, toggle whichever asset integrations you want.
+3. Start your MCP client. Tools appear under the hammer icon.
+
+To stop or restart the server manually, use the **Disconnect from MCP server** / **Connect to MCP server** button in the BlenderMCP panel.
 
 ![BlenderMCP in the sidebar](assets/hammer-icon.png)
 
@@ -128,7 +131,7 @@ A free-trial key is bundled and limits generations per day. For higher limits, g
 
 ## Troubleshooting
 
-- **No connection.** Confirm the panel reads "Disconnect from MCP server" (server is up). Confirm your MCP client is configured. Do not run `uvx ... blender-mcp` manually in a terminal; the client launches it.
+- **No connection.** Confirm the panel reads "Disconnect from MCP server" (server is up). If it reads "Connect", autostart was disabled or the previous start failed — click it. Confirm your MCP client is configured. Do not run `uvx ... blender-mcp` manually in a terminal; the client launches it.
 - **Timeouts.** Break the request into smaller steps.
 - **Poly Haven flakiness.** Claude is sometimes erratic about choosing assets; restate the request.
 - **Persistent failures.** Restart Blender and the MCP client.
