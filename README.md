@@ -1,4 +1,4 @@
-# chibifire-forge-mcp
+# chibifire-blender-mcp
 
 A Blender addon plus MCP server that lets Claude (and other MCP clients) drive Blender for prompt-assisted modeling, scene construction, and asset import.
 
