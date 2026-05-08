@@ -58,7 +58,7 @@ In `claude_desktop_config.json`:
             "command": "uvx",
             "args": [
                 "--from",
-                "git+https://github.com/chibifire/chibifire-forge-mcp",
+                "git+https://github.com/chibifire/chibifire-blender-mcp",
                 "blender-mcp"
             ]
         }
@@ -69,7 +69,7 @@ In `claude_desktop_config.json`:
 #### Claude Code
 
 ```bash
-claude mcp add blender -- uvx --from git+https://github.com/chibifire/chibifire-forge-mcp blender-mcp
+claude mcp add blender -- uvx --from git+https://github.com/chibifire/chibifire-blender-mcp blender-mcp
 ```
 
 #### Cursor
@@ -87,7 +87,7 @@ On Windows, wrap the command in `cmd /c`:
                 "/c",
                 "uvx",
                 "--from",
-                "git+https://github.com/chibifire/chibifire-forge-mcp",
+                "git+https://github.com/chibifire/chibifire-blender-mcp",
                 "blender-mcp"
             ]
         }

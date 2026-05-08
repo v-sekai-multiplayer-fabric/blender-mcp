@@ -2319,6 +2319,11 @@ class BlenderMCPPreferences(bpy.types.AddonPreferences):
         min=1024,
         max=65535,
     )
+    blendermcp_autostart: bpy.props.BoolProperty(
+        name="Auto-connect on Blender launch",
+        description="Start the MCP server automatically when the addon loads",
+        default=True,
+    )
     blendermcp_use_polyhaven: bpy.props.BoolProperty(
         name="Use Poly Haven",
         description="Enable Poly Haven asset integration",
@@ -2418,6 +2423,7 @@ class BlenderMCPPreferences(bpy.types.AddonPreferences):
 
 def _draw_settings(layout, prefs):
     layout.prop(prefs, "blendermcp_port")
+    layout.prop(prefs, "blendermcp_autostart")
     layout.prop(prefs, "blendermcp_use_polyhaven", text="Use assets from Poly Haven")
 
     layout.prop(prefs, "blendermcp_use_hyper3d", text="Use Hyper3D Rodin 3D model generation")
@@ -2514,9 +2520,23 @@ _CLASSES = (
 )
 
 
+def _autostart():
+    try:
+        prefs = _prefs()
+    except (KeyError, AttributeError):
+        return None
+    if not prefs.blendermcp_autostart:
+        return None
+    if not getattr(bpy.types, "blendermcp_server", None):
+        bpy.types.blendermcp_server = BlenderMCPServer(port=prefs.blendermcp_port)
+    bpy.types.blendermcp_server.start()
+    return None
+
+
 def register():
     for cls in _CLASSES:
         bpy.utils.register_class(cls)
+    bpy.app.timers.register(_autostart, first_interval=0.5)
     print("BlenderMCP addon registered")
 
 
