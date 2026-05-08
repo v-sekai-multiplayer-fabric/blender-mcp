@@ -44,14 +44,49 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 ### Blender addon
 
-1. Clone this repo, then zip the addon package:
-   ```bash
-   cd src && zip -r blender_mcp_addon.zip blender_mcp_addon
-   ```
-2. In Blender 4.2+: **Edit > Preferences > Get Extensions > drop-down (▼) > Install from Disk...** and pick `blender_mcp_addon.zip`.
-   In Blender 3.x/4.0/4.1 (legacy): **Edit > Preferences > Add-ons > Install...** and pick the same zip.
-3. Enable **Interface: Blender MCP** if it isn't already.
-4. Configure in the addon preferences panel, or in the 3D Viewport sidebar (press `N`) under the **BlenderMCP** tab.
+#### 1. Build the addon zip
+
+Clone this repo, then zip the package directory:
+
+macOS / Linux:
+```bash
+git clone https://github.com/chibifire/chibifire-blender-mcp
+cd chibifire-blender-mcp/src
+zip -r ../blender_mcp_addon.zip blender_mcp_addon
+```
+
+Windows (PowerShell):
+```powershell
+git clone https://github.com/chibifire/chibifire-blender-mcp
+cd chibifire-blender-mcp\src
+Compress-Archive -Path blender_mcp_addon -DestinationPath ..\blender_mcp_addon.zip
+```
+
+The result is `blender_mcp_addon.zip` at the repo root.
+
+#### 2. Install in Blender
+
+**Blender 4.2+ (Extensions system, recommended):**
+
+Drag `blender_mcp_addon.zip` onto a Blender window and confirm the install prompt.
+
+Or, via menu: **Edit > Preferences > Get Extensions**, click the **▼** dropdown in the top-right of the panel, choose **Install from Disk...**, and pick the zip. Search for *Blender MCP* and enable it.
+
+**Blender 3.0–4.1 (legacy add-on system):**
+
+**Edit > Preferences > Add-ons**, click **Install...**, pick the zip, then tick the checkbox next to **Interface: Blender MCP**.
+
+#### 3. Configure
+
+Open **Edit > Preferences > Add-ons > Blender MCP** for full settings, or use the 3D Viewport sidebar (press `N`) under the **BlenderMCP** tab for the most common toggles. The server auto-starts on launch by default; uncheck **Auto-connect on Blender launch** to opt out.
+
+#### Updating
+
+To upgrade, repeat steps 1–2 with a fresh clone (or `git pull` and re-zip). Blender replaces the existing install. Your preferences (port, integration toggles, API keys) are stored per-user and survive reinstalls.
+
+#### Uninstall
+
+In the same Add-ons / Get Extensions panel, expand the entry and click **Remove** (or **Uninstall**).
 
 ### MCP client config
 
