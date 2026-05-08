@@ -27,6 +27,11 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 package-dir = {"" = "src"}
 
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["blender_mcp*"]
+exclude = ["blender_mcp_addon*"]
+
 [project.urls]
 "Homepage" = "https://github.com/chibifire/chibifire-blender-mcp"
 "Bug Tracker" = "https://github.com/chibifire/chibifire-blender-mcp/issues"
