@@ -16,7 +16,11 @@ Fork of [BlenderMCP](https://github.com/ahujasid/blender-mcp) by Siddharth Ahuja
 
 ## Architecture
 
-- `addon.py` — Blender addon. Hosts the TCP server and dispatches commands.
+- `src/blender_mcp_addon/` — Blender addon (Extension format with `blender_manifest.toml`). Hosts the TCP server and dispatches commands.
+  - `__init__.py` — registration entry point
+  - `server.py` — `BlenderMCPServer` core (socket, dispatch, scene/object/screenshot, `execute_code`)
+  - `preferences.py`, `panel.py`, `operators.py`, `state.py`, `common.py`
+  - `integrations/{polyhaven,sketchfab,hyper3d,hunyuan3d}.py` — per-service mixins
 - `src/blender_mcp/server.py` — FastMCP server. Connects to the addon socket and exposes Blender as MCP tools.
 
 Settings (port, integration toggles, API keys) live in the addon's user preferences, so they survive File > New, Open File, and scene resets.
@@ -25,7 +29,7 @@ Settings (port, integration toggles, API keys) live in the addon's user preferen
 
 ### Prerequisites
 
-- Blender 3.0+
+- Blender 4.2+ (recommended; uses the Extensions system)
 - Python 3.10+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
@@ -40,9 +44,13 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 ### Blender addon
 
-1. Download `addon.py` from this repo.
-2. In Blender: **Edit > Preferences > Add-ons > Install...** and pick `addon.py`.
-3. Enable **Interface: Blender MCP**.
+1. Clone this repo, then zip the addon package:
+   ```bash
+   cd src && zip -r blender_mcp_addon.zip blender_mcp_addon
+   ```
+2. In Blender 4.2+: **Edit > Preferences > Get Extensions > drop-down (▼) > Install from Disk...** and pick `blender_mcp_addon.zip`.
+   In Blender 3.x/4.0/4.1 (legacy): **Edit > Preferences > Add-ons > Install...** and pick the same zip.
+3. Enable **Interface: Blender MCP** if it isn't already.
 4. Configure in the addon preferences panel, or in the 3D Viewport sidebar (press `N`) under the **BlenderMCP** tab.
 
 ### MCP client config
