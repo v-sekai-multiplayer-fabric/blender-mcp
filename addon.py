@@ -36,6 +36,10 @@ RODIN_FREE_TRIAL_KEY = "k9TcfFoEhNd9cCPP2guHAHHHkctZHIRhZDywZ1euGUXwihbYLpOjQhof
 REQ_HEADERS = requests.utils.default_headers()
 REQ_HEADERS.update({"User-Agent": "blender-mcp"})
 
+
+def _prefs():
+    return bpy.context.preferences.addons[__name__].preferences
+
 class BlenderMCPServer:
     def __init__(self, host='localhost', port=9876):
         self.host = host
@@ -215,7 +219,7 @@ class BlenderMCPServer:
         }
 
         # Add Polyhaven handlers only if enabled
-        if bpy.context.scene.blendermcp_use_polyhaven:
+        if _prefs().blendermcp_use_polyhaven:
             polyhaven_handlers = {
                 "get_polyhaven_categories": self.get_polyhaven_categories,
                 "search_polyhaven_assets": self.search_polyhaven_assets,
@@ -225,7 +229,7 @@ class BlenderMCPServer:
             handlers.update(polyhaven_handlers)
 
         # Add Hyper3d handlers only if enabled
-        if bpy.context.scene.blendermcp_use_hyper3d:
+        if _prefs().blendermcp_use_hyper3d:
             polyhaven_handlers = {
                 "create_rodin_job": self.create_rodin_job,
                 "poll_rodin_job_status": self.poll_rodin_job_status,
@@ -234,7 +238,7 @@ class BlenderMCPServer:
             handlers.update(polyhaven_handlers)
 
         # Add Sketchfab handlers only if enabled
-        if bpy.context.scene.blendermcp_use_sketchfab:
+        if _prefs().blendermcp_use_sketchfab:
             sketchfab_handlers = {
                 "search_sketchfab_models": self.search_sketchfab_models,
                 "get_sketchfab_model_preview": self.get_sketchfab_model_preview,
@@ -243,7 +247,7 @@ class BlenderMCPServer:
             handlers.update(sketchfab_handlers)
         
         # Add Hunyuan3d handlers only if enabled
-        if bpy.context.scene.blendermcp_use_hunyuan3d:
+        if _prefs().blendermcp_use_hunyuan3d:
             hunyuan_handlers = {
                 "create_hunyuan_job": self.create_hunyuan_job,
                 "poll_hunyuan_job_status": self.poll_hunyuan_job_status,
@@ -1110,7 +1114,7 @@ class BlenderMCPServer:
 
     def get_polyhaven_status(self):
         """Get the current status of PolyHaven integration"""
-        enabled = bpy.context.scene.blendermcp_use_polyhaven
+        enabled = _prefs().blendermcp_use_polyhaven
         if enabled:
             return {"enabled": True, "message": "PolyHaven integration is enabled and ready to use."}
         else:
@@ -1125,9 +1129,9 @@ class BlenderMCPServer:
     #region Hyper3D
     def get_hyper3d_status(self):
         """Get the current status of Hyper3D Rodin integration"""
-        enabled = bpy.context.scene.blendermcp_use_hyper3d
+        enabled = _prefs().blendermcp_use_hyper3d
         if enabled:
-            if not bpy.context.scene.blendermcp_hyper3d_api_key:
+            if not _prefs().blendermcp_hyper3d_api_key:
                 return {
                     "enabled": False,
                     "message": """Hyper3D Rodin integration is currently enabled, but API key is not given. To enable it:
@@ -1136,9 +1140,9 @@ class BlenderMCPServer:
                                 3. Choose the right plaform and fill in the API Key
                                 4. Restart the connection to Claude"""
                 }
-            mode = bpy.context.scene.blendermcp_hyper3d_mode
+            mode = _prefs().blendermcp_hyper3d_mode
             message = f"Hyper3D Rodin integration is enabled and ready to use. Mode: {mode}. " + \
-                f"Key type: {'private' if bpy.context.scene.blendermcp_hyper3d_api_key != RODIN_FREE_TRIAL_KEY else 'free_trial'}"
+                f"Key type: {'private' if _prefs().blendermcp_hyper3d_api_key != RODIN_FREE_TRIAL_KEY else 'free_trial'}"
             return {
                 "enabled": True,
                 "message": message
@@ -1153,7 +1157,7 @@ class BlenderMCPServer:
             }
 
     def create_rodin_job(self, *args, **kwargs):
-        match bpy.context.scene.blendermcp_hyper3d_mode:
+        match _prefs().blendermcp_hyper3d_mode:
             case "MAIN_SITE":
                 return self.create_rodin_job_main_site(*args, **kwargs)
             case "FAL_AI":
@@ -1183,7 +1187,7 @@ class BlenderMCPServer:
             response = requests.post(
                 "https://hyperhuman.deemos.com/api/v2/rodin",
                 headers={
-                    "Authorization": f"Bearer {bpy.context.scene.blendermcp_hyper3d_api_key}",
+                    "Authorization": f"Bearer {_prefs().blendermcp_hyper3d_api_key}",
                 },
                 files=files
             )
@@ -1211,7 +1215,7 @@ class BlenderMCPServer:
             response = requests.post(
                 "https://queue.fal.run/fal-ai/hyper3d/rodin",
                 headers={
-                    "Authorization": f"Key {bpy.context.scene.blendermcp_hyper3d_api_key}",
+                    "Authorization": f"Key {_prefs().blendermcp_hyper3d_api_key}",
                     "Content-Type": "application/json",
                 },
                 json=req_data
@@ -1222,7 +1226,7 @@ class BlenderMCPServer:
             return {"error": str(e)}
 
     def poll_rodin_job_status(self, *args, **kwargs):
-        match bpy.context.scene.blendermcp_hyper3d_mode:
+        match _prefs().blendermcp_hyper3d_mode:
             case "MAIN_SITE":
                 return self.poll_rodin_job_status_main_site(*args, **kwargs)
             case "FAL_AI":
@@ -1235,7 +1239,7 @@ class BlenderMCPServer:
         response = requests.post(
             "https://hyperhuman.deemos.com/api/v2/status",
             headers={
-                "Authorization": f"Bearer {bpy.context.scene.blendermcp_hyper3d_api_key}",
+                "Authorization": f"Bearer {_prefs().blendermcp_hyper3d_api_key}",
             },
             json={
                 "subscription_key": subscription_key,
@@ -1251,7 +1255,7 @@ class BlenderMCPServer:
         response = requests.get(
             f"https://queue.fal.run/fal-ai/hyper3d/requests/{request_id}/status",
             headers={
-                "Authorization": f"KEY {bpy.context.scene.blendermcp_hyper3d_api_key}",
+                "Authorization": f"KEY {_prefs().blendermcp_hyper3d_api_key}",
             },
         )
         data = response.json()
@@ -1325,7 +1329,7 @@ class BlenderMCPServer:
         return mesh_obj
 
     def import_generated_asset(self, *args, **kwargs):
-        match bpy.context.scene.blendermcp_hyper3d_mode:
+        match _prefs().blendermcp_hyper3d_mode:
             case "MAIN_SITE":
                 return self.import_generated_asset_main_site(*args, **kwargs)
             case "FAL_AI":
@@ -1338,7 +1342,7 @@ class BlenderMCPServer:
         response = requests.post(
             "https://hyperhuman.deemos.com/api/v2/download",
             headers={
-                "Authorization": f"Bearer {bpy.context.scene.blendermcp_hyper3d_api_key}",
+                "Authorization": f"Bearer {_prefs().blendermcp_hyper3d_api_key}",
             },
             json={
                 'task_uuid': task_uuid
@@ -1404,7 +1408,7 @@ class BlenderMCPServer:
         response = requests.get(
             f"https://queue.fal.run/fal-ai/hyper3d/requests/{request_id}",
             headers={
-                "Authorization": f"Key {bpy.context.scene.blendermcp_hyper3d_api_key}",
+                "Authorization": f"Key {_prefs().blendermcp_hyper3d_api_key}",
             }
         )
         data_ = response.json()
@@ -1461,8 +1465,8 @@ class BlenderMCPServer:
     #region Sketchfab API
     def get_sketchfab_status(self):
         """Get the current status of Sketchfab integration"""
-        enabled = bpy.context.scene.blendermcp_use_sketchfab
-        api_key = bpy.context.scene.blendermcp_sketchfab_api_key
+        enabled = _prefs().blendermcp_use_sketchfab
+        api_key = _prefs().blendermcp_sketchfab_api_key
 
         # Test the API key if present
         if api_key:
@@ -1524,7 +1528,7 @@ class BlenderMCPServer:
     def search_sketchfab_models(self, query, categories=None, count=20, downloadable=True):
         """Search for models on Sketchfab based on query and optional filters"""
         try:
-            api_key = bpy.context.scene.blendermcp_sketchfab_api_key
+            api_key = _prefs().blendermcp_sketchfab_api_key
             if not api_key:
                 return {"error": "Sketchfab API key is not configured"}
 
@@ -1588,7 +1592,7 @@ class BlenderMCPServer:
         try:
             import base64
             
-            api_key = bpy.context.scene.blendermcp_sketchfab_api_key
+            api_key = _prefs().blendermcp_sketchfab_api_key
             if not api_key:
                 return {"error": "Sketchfab API key is not configured"}
 
@@ -1678,7 +1682,7 @@ class BlenderMCPServer:
         - target_size: The target size in Blender units (meters) for the largest dimension
         """
         try:
-            api_key = bpy.context.scene.blendermcp_sketchfab_api_key
+            api_key = _prefs().blendermcp_sketchfab_api_key
             if not api_key:
                 return {"error": "Sketchfab API key is not configured"}
 
@@ -1896,12 +1900,12 @@ class BlenderMCPServer:
     #region Hunyuan3D
     def get_hunyuan3d_status(self):
         """Get the current status of Hunyuan3D integration"""
-        enabled = bpy.context.scene.blendermcp_use_hunyuan3d
-        hunyuan3d_mode = bpy.context.scene.blendermcp_hunyuan3d_mode
+        enabled = _prefs().blendermcp_use_hunyuan3d
+        hunyuan3d_mode = _prefs().blendermcp_hunyuan3d_mode
         if enabled:
             match hunyuan3d_mode:
                 case "OFFICIAL_API":
-                    if not bpy.context.scene.blendermcp_hunyuan3d_secret_id or not bpy.context.scene.blendermcp_hunyuan3d_secret_key:
+                    if not _prefs().blendermcp_hunyuan3d_secret_id or not _prefs().blendermcp_hunyuan3d_secret_key:
                         return {
                             "enabled": False, 
                             "mode": hunyuan3d_mode, 
@@ -1912,7 +1916,7 @@ class BlenderMCPServer:
                                 4. Restart the connection to Claude"""
                         }
                 case "LOCAL_API":
-                    if not bpy.context.scene.blendermcp_hunyuan3d_api_url:
+                    if not _prefs().blendermcp_hunyuan3d_api_url:
                         return {
                             "enabled": False, 
                             "mode": hunyuan3d_mode, 
@@ -2022,7 +2026,7 @@ class BlenderMCPServer:
         return headers, endpoint
 
     def create_hunyuan_job(self, *args, **kwargs):
-        match bpy.context.scene.blendermcp_hunyuan3d_mode:
+        match _prefs().blendermcp_hunyuan3d_mode:
             case "OFFICIAL_API":
                 return self.create_hunyuan_job_main_site(*args, **kwargs)
             case "LOCAL_API":
@@ -2036,8 +2040,8 @@ class BlenderMCPServer:
         image: str = None
     ):
         try:
-            secret_id = bpy.context.scene.blendermcp_hunyuan3d_secret_id
-            secret_key = bpy.context.scene.blendermcp_hunyuan3d_secret_key
+            secret_id = _prefs().blendermcp_hunyuan3d_secret_id
+            secret_key = _prefs().blendermcp_hunyuan3d_secret_key
 
             if not secret_id or not secret_key:
                 return {"error": "SecretId or SecretKey is not given"}
@@ -2105,11 +2109,11 @@ class BlenderMCPServer:
         text_prompt: str = None,
         image: str = None):
         try:
-            base_url = bpy.context.scene.blendermcp_hunyuan3d_api_url.rstrip('/')
-            octree_resolution = bpy.context.scene.blendermcp_hunyuan3d_octree_resolution
-            num_inference_steps = bpy.context.scene.blendermcp_hunyuan3d_num_inference_steps
-            guidance_scale = bpy.context.scene.blendermcp_hunyuan3d_guidance_scale
-            texture = bpy.context.scene.blendermcp_hunyuan3d_texture
+            base_url = _prefs().blendermcp_hunyuan3d_api_url.rstrip('/')
+            octree_resolution = _prefs().blendermcp_hunyuan3d_octree_resolution
+            num_inference_steps = _prefs().blendermcp_hunyuan3d_num_inference_steps
+            guidance_scale = _prefs().blendermcp_hunyuan3d_guidance_scale
+            texture = _prefs().blendermcp_hunyuan3d_texture
 
             if not base_url:
                 return {"error": "API URL is not given"}
@@ -2187,8 +2191,8 @@ class BlenderMCPServer:
         """Call the job status API to get the job status"""
         print(job_id)
         try:
-            secret_id = bpy.context.scene.blendermcp_hunyuan3d_secret_id
-            secret_key = bpy.context.scene.blendermcp_hunyuan3d_secret_key
+            secret_id = _prefs().blendermcp_hunyuan3d_secret_id
+            secret_key = _prefs().blendermcp_hunyuan3d_secret_key
 
             if not secret_id or not secret_key:
                 return {"error": "SecretId or SecretKey is not given"}
@@ -2304,6 +2308,147 @@ class BlenderMCPServer:
                 print(f"Failed to clean up temporary directory {temp_dir}: {e}")
     #endregion
 
+# Addon preferences (per-user, survive scene reset)
+class BlenderMCPPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    blendermcp_port: IntProperty(
+        name="Port",
+        description="Port for the BlenderMCP server",
+        default=9876,
+        min=1024,
+        max=65535,
+    )
+    blendermcp_use_polyhaven: bpy.props.BoolProperty(
+        name="Use Poly Haven",
+        description="Enable Poly Haven asset integration",
+        default=False,
+    )
+    blendermcp_use_hyper3d: bpy.props.BoolProperty(
+        name="Use Hyper3D Rodin",
+        description="Enable Hyper3D Rodin generation integration",
+        default=False,
+    )
+    blendermcp_hyper3d_mode: bpy.props.EnumProperty(
+        name="Rodin Mode",
+        description="Choose the platform used to call Rodin APIs",
+        items=[
+            ("MAIN_SITE", "hyper3d.ai", "hyper3d.ai"),
+            ("FAL_AI", "fal.ai", "fal.ai"),
+        ],
+        default="MAIN_SITE",
+    )
+    blendermcp_hyper3d_api_key: bpy.props.StringProperty(
+        name="Hyper3D API Key",
+        subtype="PASSWORD",
+        description="API Key provided by Hyper3D",
+        default="",
+    )
+    blendermcp_use_hunyuan3d: bpy.props.BoolProperty(
+        name="Use Hunyuan 3D",
+        description="Enable Hunyuan asset integration",
+        default=False,
+    )
+    blendermcp_hunyuan3d_mode: bpy.props.EnumProperty(
+        name="Hunyuan3D Mode",
+        description="Choose a local or official APIs",
+        items=[
+            ("LOCAL_API", "local api", "local api"),
+            ("OFFICIAL_API", "official api", "official api"),
+        ],
+        default="LOCAL_API",
+    )
+    blendermcp_hunyuan3d_secret_id: bpy.props.StringProperty(
+        name="Hunyuan 3D SecretId",
+        description="SecretId provided by Hunyuan 3D",
+        default="",
+    )
+    blendermcp_hunyuan3d_secret_key: bpy.props.StringProperty(
+        name="Hunyuan 3D SecretKey",
+        subtype="PASSWORD",
+        description="SecretKey provided by Hunyuan 3D",
+        default="",
+    )
+    blendermcp_hunyuan3d_api_url: bpy.props.StringProperty(
+        name="API URL",
+        description="URL of the Hunyuan 3D API service",
+        default="http://localhost:8081",
+    )
+    blendermcp_hunyuan3d_octree_resolution: bpy.props.IntProperty(
+        name="Octree Resolution",
+        description="Octree resolution for the 3D generation",
+        default=256,
+        min=128,
+        max=512,
+    )
+    blendermcp_hunyuan3d_num_inference_steps: bpy.props.IntProperty(
+        name="Number of Inference Steps",
+        description="Number of inference steps for the 3D generation",
+        default=20,
+        min=20,
+        max=50,
+    )
+    blendermcp_hunyuan3d_guidance_scale: bpy.props.FloatProperty(
+        name="Guidance Scale",
+        description="Guidance scale for the 3D generation",
+        default=5.5,
+        min=1.0,
+        max=10.0,
+    )
+    blendermcp_hunyuan3d_texture: bpy.props.BoolProperty(
+        name="Generate Texture",
+        description="Whether to generate texture for the 3D model",
+        default=False,
+    )
+    blendermcp_use_sketchfab: bpy.props.BoolProperty(
+        name="Use Sketchfab",
+        description="Enable Sketchfab asset integration",
+        default=False,
+    )
+    blendermcp_sketchfab_api_key: bpy.props.StringProperty(
+        name="Sketchfab API Key",
+        subtype="PASSWORD",
+        description="API Key provided by Sketchfab",
+        default="",
+    )
+
+    def draw(self, context):
+        _draw_settings(self.layout, self)
+
+
+def _draw_settings(layout, prefs):
+    layout.prop(prefs, "blendermcp_port")
+    layout.prop(prefs, "blendermcp_use_polyhaven", text="Use assets from Poly Haven")
+
+    layout.prop(prefs, "blendermcp_use_hyper3d", text="Use Hyper3D Rodin 3D model generation")
+    if prefs.blendermcp_use_hyper3d:
+        layout.prop(prefs, "blendermcp_hyper3d_mode", text="Rodin Mode")
+        layout.prop(prefs, "blendermcp_hyper3d_api_key", text="API Key")
+        layout.operator("blendermcp.set_hyper3d_free_trial_api_key", text="Set Free Trial API Key")
+
+    layout.prop(prefs, "blendermcp_use_sketchfab", text="Use assets from Sketchfab")
+    if prefs.blendermcp_use_sketchfab:
+        layout.prop(prefs, "blendermcp_sketchfab_api_key", text="API Key")
+
+    layout.prop(prefs, "blendermcp_use_hunyuan3d", text="Use Tencent Hunyuan 3D model generation")
+    if prefs.blendermcp_use_hunyuan3d:
+        layout.prop(prefs, "blendermcp_hunyuan3d_mode", text="Hunyuan3D Mode")
+        if prefs.blendermcp_hunyuan3d_mode == 'OFFICIAL_API':
+            layout.prop(prefs, "blendermcp_hunyuan3d_secret_id", text="SecretId")
+            layout.prop(prefs, "blendermcp_hunyuan3d_secret_key", text="SecretKey")
+        if prefs.blendermcp_hunyuan3d_mode == 'LOCAL_API':
+            layout.prop(prefs, "blendermcp_hunyuan3d_api_url", text="API URL")
+            layout.prop(prefs, "blendermcp_hunyuan3d_octree_resolution", text="Octree Resolution")
+            layout.prop(prefs, "blendermcp_hunyuan3d_num_inference_steps", text="Number of Inference Steps")
+            layout.prop(prefs, "blendermcp_hunyuan3d_guidance_scale", text="Guidance Scale")
+            layout.prop(prefs, "blendermcp_hunyuan3d_texture", text="Generate Texture")
+
+
+def _server_running():
+    server = getattr(bpy.types, "blendermcp_server", None)
+    return bool(server and server.running)
+
+
 # Blender UI Panel
 class BLENDERMCP_PT_Panel(bpy.types.Panel):
     bl_label = "Blender MCP"
@@ -2313,40 +2458,15 @@ class BLENDERMCP_PT_Panel(bpy.types.Panel):
     bl_category = 'BlenderMCP'
 
     def draw(self, context):
-        layout = self.layout
-        scene = context.scene
+        prefs = _prefs()
+        _draw_settings(self.layout, prefs)
 
-        layout.prop(scene, "blendermcp_port")
-        layout.prop(scene, "blendermcp_use_polyhaven", text="Use assets from Poly Haven")
-
-        layout.prop(scene, "blendermcp_use_hyper3d", text="Use Hyper3D Rodin 3D model generation")
-        if scene.blendermcp_use_hyper3d:
-            layout.prop(scene, "blendermcp_hyper3d_mode", text="Rodin Mode")
-            layout.prop(scene, "blendermcp_hyper3d_api_key", text="API Key")
-            layout.operator("blendermcp.set_hyper3d_free_trial_api_key", text="Set Free Trial API Key")
-
-        layout.prop(scene, "blendermcp_use_sketchfab", text="Use assets from Sketchfab")
-        if scene.blendermcp_use_sketchfab:
-            layout.prop(scene, "blendermcp_sketchfab_api_key", text="API Key")
-
-        layout.prop(scene, "blendermcp_use_hunyuan3d", text="Use Tencent Hunyuan 3D model generation")
-        if scene.blendermcp_use_hunyuan3d:
-            layout.prop(scene, "blendermcp_hunyuan3d_mode", text="Hunyuan3D Mode")
-            if scene.blendermcp_hunyuan3d_mode == 'OFFICIAL_API':
-                layout.prop(scene, "blendermcp_hunyuan3d_secret_id", text="SecretId")
-                layout.prop(scene, "blendermcp_hunyuan3d_secret_key", text="SecretKey")
-            if scene.blendermcp_hunyuan3d_mode == 'LOCAL_API':
-                layout.prop(scene, "blendermcp_hunyuan3d_api_url", text="API URL")
-                layout.prop(scene, "blendermcp_hunyuan3d_octree_resolution", text="Octree Resolution")
-                layout.prop(scene, "blendermcp_hunyuan3d_num_inference_steps", text="Number of Inference Steps")
-                layout.prop(scene, "blendermcp_hunyuan3d_guidance_scale", text="Guidance Scale")
-                layout.prop(scene, "blendermcp_hunyuan3d_texture", text="Generate Texture")
-        
-        if not scene.blendermcp_server_running:
-            layout.operator("blendermcp.start_server", text="Connect to MCP server")
+        if _server_running():
+            self.layout.operator("blendermcp.stop_server", text="Disconnect from MCP server")
+            self.layout.label(text=f"Running on port {prefs.blendermcp_port}")
         else:
-            layout.operator("blendermcp.stop_server", text="Disconnect from MCP server")
-            layout.label(text=f"Running on port {scene.blendermcp_port}")
+            self.layout.operator("blendermcp.start_server", text="Connect to MCP server")
+
 
 # Operator to set Hyper3D API Key
 class BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey(bpy.types.Operator):
@@ -2354,8 +2474,9 @@ class BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey(bpy.types.Operator):
     bl_label = "Set Free Trial API Key"
 
     def execute(self, context):
-        context.scene.blendermcp_hyper3d_api_key = RODIN_FREE_TRIAL_KEY
-        context.scene.blendermcp_hyper3d_mode = 'MAIN_SITE'
+        prefs = _prefs()
+        prefs.blendermcp_hyper3d_api_key = RODIN_FREE_TRIAL_KEY
+        prefs.blendermcp_hyper3d_mode = 'MAIN_SITE'
         self.report({'INFO'}, "API Key set successfully!")
         return {'FINISHED'}
 
@@ -2366,16 +2487,9 @@ class BLENDERMCP_OT_StartServer(bpy.types.Operator):
     bl_description = "Start the BlenderMCP server to connect with Claude"
 
     def execute(self, context):
-        scene = context.scene
-
-        # Create a new server instance
-        if not hasattr(bpy.types, "blendermcp_server") or not bpy.types.blendermcp_server:
-            bpy.types.blendermcp_server = BlenderMCPServer(port=scene.blendermcp_port)
-
-        # Start the server
+        if not getattr(bpy.types, "blendermcp_server", None):
+            bpy.types.blendermcp_server = BlenderMCPServer(port=_prefs().blendermcp_port)
         bpy.types.blendermcp_server.start()
-        scene.blendermcp_server_running = True
-
         return {'FINISHED'}
 
 # Operator to stop the server
@@ -2385,174 +2499,35 @@ class BLENDERMCP_OT_StopServer(bpy.types.Operator):
     bl_description = "Stop the connection to Claude"
 
     def execute(self, context):
-        scene = context.scene
-
-        # Stop the server if it exists
-        if hasattr(bpy.types, "blendermcp_server") and bpy.types.blendermcp_server:
-            bpy.types.blendermcp_server.stop()
+        server = getattr(bpy.types, "blendermcp_server", None)
+        if server:
+            server.stop()
             del bpy.types.blendermcp_server
-
-        scene.blendermcp_server_running = False
-
         return {'FINISHED'}
 
-# Registration functions
+_CLASSES = (
+    BlenderMCPPreferences,
+    BLENDERMCP_PT_Panel,
+    BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey,
+    BLENDERMCP_OT_StartServer,
+    BLENDERMCP_OT_StopServer,
+)
+
+
 def register():
-    bpy.types.Scene.blendermcp_port = IntProperty(
-        name="Port",
-        description="Port for the BlenderMCP server",
-        default=9876,
-        min=1024,
-        max=65535
-    )
-
-    bpy.types.Scene.blendermcp_server_running = bpy.props.BoolProperty(
-        name="Server Running",
-        default=False
-    )
-
-    bpy.types.Scene.blendermcp_use_polyhaven = bpy.props.BoolProperty(
-        name="Use Poly Haven",
-        description="Enable Poly Haven asset integration",
-        default=False
-    )
-
-    bpy.types.Scene.blendermcp_use_hyper3d = bpy.props.BoolProperty(
-        name="Use Hyper3D Rodin",
-        description="Enable Hyper3D Rodin generatino integration",
-        default=False
-    )
-
-    bpy.types.Scene.blendermcp_hyper3d_mode = bpy.props.EnumProperty(
-        name="Rodin Mode",
-        description="Choose the platform used to call Rodin APIs",
-        items=[
-            ("MAIN_SITE", "hyper3d.ai", "hyper3d.ai"),
-            ("FAL_AI", "fal.ai", "fal.ai"),
-        ],
-        default="MAIN_SITE"
-    )
-
-    bpy.types.Scene.blendermcp_hyper3d_api_key = bpy.props.StringProperty(
-        name="Hyper3D API Key",
-        subtype="PASSWORD",
-        description="API Key provided by Hyper3D",
-        default=""
-    )
-
-    bpy.types.Scene.blendermcp_use_hunyuan3d = bpy.props.BoolProperty(
-        name="Use Hunyuan 3D",
-        description="Enable Hunyuan asset integration",
-        default=False
-    )
-
-    bpy.types.Scene.blendermcp_hunyuan3d_mode = bpy.props.EnumProperty(
-        name="Hunyuan3D Mode",
-        description="Choose a local or official APIs",
-        items=[
-            ("LOCAL_API", "local api", "local api"),
-            ("OFFICIAL_API", "official api", "official api"),
-        ],
-        default="LOCAL_API"
-    )
-
-    bpy.types.Scene.blendermcp_hunyuan3d_secret_id = bpy.props.StringProperty(
-        name="Hunyuan 3D SecretId",
-        description="SecretId provided by Hunyuan 3D",
-        default=""
-    )
-
-    bpy.types.Scene.blendermcp_hunyuan3d_secret_key = bpy.props.StringProperty(
-        name="Hunyuan 3D SecretKey",
-        subtype="PASSWORD",
-        description="SecretKey provided by Hunyuan 3D",
-        default=""
-    )
-
-    bpy.types.Scene.blendermcp_hunyuan3d_api_url = bpy.props.StringProperty(
-        name="API URL",
-        description="URL of the Hunyuan 3D API service",
-        default="http://localhost:8081"
-    )
-
-    bpy.types.Scene.blendermcp_hunyuan3d_octree_resolution = bpy.props.IntProperty(
-        name="Octree Resolution",
-        description="Octree resolution for the 3D generation",
-        default=256,
-        min=128,
-        max=512,
-    )
-
-    bpy.types.Scene.blendermcp_hunyuan3d_num_inference_steps = bpy.props.IntProperty(
-        name="Number of Inference Steps",
-        description="Number of inference steps for the 3D generation",
-        default=20,
-        min=20,
-        max=50,
-    )
-
-    bpy.types.Scene.blendermcp_hunyuan3d_guidance_scale = bpy.props.FloatProperty(
-        name="Guidance Scale",
-        description="Guidance scale for the 3D generation",
-        default=5.5,
-        min=1.0,
-        max=10.0,
-    )
-
-    bpy.types.Scene.blendermcp_hunyuan3d_texture = bpy.props.BoolProperty(
-        name="Generate Texture",
-        description="Whether to generate texture for the 3D model",
-        default=False,
-    )
-    
-    bpy.types.Scene.blendermcp_use_sketchfab = bpy.props.BoolProperty(
-        name="Use Sketchfab",
-        description="Enable Sketchfab asset integration",
-        default=False
-    )
-
-    bpy.types.Scene.blendermcp_sketchfab_api_key = bpy.props.StringProperty(
-        name="Sketchfab API Key",
-        subtype="PASSWORD",
-        description="API Key provided by Sketchfab",
-        default=""
-    )
-
-    bpy.utils.register_class(BLENDERMCP_PT_Panel)
-    bpy.utils.register_class(BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey)
-    bpy.utils.register_class(BLENDERMCP_OT_StartServer)
-    bpy.utils.register_class(BLENDERMCP_OT_StopServer)
-
+    for cls in _CLASSES:
+        bpy.utils.register_class(cls)
     print("BlenderMCP addon registered")
 
+
 def unregister():
-    # Stop the server if it's running
-    if hasattr(bpy.types, "blendermcp_server") and bpy.types.blendermcp_server:
-        bpy.types.blendermcp_server.stop()
+    server = getattr(bpy.types, "blendermcp_server", None)
+    if server:
+        server.stop()
         del bpy.types.blendermcp_server
 
-    bpy.utils.unregister_class(BLENDERMCP_PT_Panel)
-    bpy.utils.unregister_class(BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey)
-    bpy.utils.unregister_class(BLENDERMCP_OT_StartServer)
-    bpy.utils.unregister_class(BLENDERMCP_OT_StopServer)
-
-    del bpy.types.Scene.blendermcp_port
-    del bpy.types.Scene.blendermcp_server_running
-    del bpy.types.Scene.blendermcp_use_polyhaven
-    del bpy.types.Scene.blendermcp_use_hyper3d
-    del bpy.types.Scene.blendermcp_hyper3d_mode
-    del bpy.types.Scene.blendermcp_hyper3d_api_key
-    del bpy.types.Scene.blendermcp_use_sketchfab
-    del bpy.types.Scene.blendermcp_sketchfab_api_key
-    del bpy.types.Scene.blendermcp_use_hunyuan3d
-    del bpy.types.Scene.blendermcp_hunyuan3d_mode
-    del bpy.types.Scene.blendermcp_hunyuan3d_secret_id
-    del bpy.types.Scene.blendermcp_hunyuan3d_secret_key
-    del bpy.types.Scene.blendermcp_hunyuan3d_api_url
-    del bpy.types.Scene.blendermcp_hunyuan3d_octree_resolution
-    del bpy.types.Scene.blendermcp_hunyuan3d_num_inference_steps
-    del bpy.types.Scene.blendermcp_hunyuan3d_guidance_scale
-    del bpy.types.Scene.blendermcp_hunyuan3d_texture
+    for cls in reversed(_CLASSES):
+        bpy.utils.unregister_class(cls)
 
     print("BlenderMCP addon unregistered")
 
