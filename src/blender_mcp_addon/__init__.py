@@ -50,14 +50,47 @@ def _autostart():
     return None
 
 
+@bpy.app.handlers.persistent
+def _re_enable_after_reset(_dummy=None):
+    """Re-enable this add-on after a factory reset / load-factory-preferences.
+
+    ``bpy.ops.wm.read_factory_settings()`` and friends wipe the user prefs and
+    disable every add-on, including this one — which kills the MCP socket and
+    leaves the client stranded. Hooking ``load_factory_*_post`` lets us boot
+    the add-on back up automatically as soon as Blender finishes the reset.
+    """
+    import addon_utils
+
+    pkg = __package__
+    try:
+        addon_utils.enable(pkg, default_set=True, persistent=True)
+    except Exception as exc:
+        print(f"BlenderMCP: failed to re-enable {pkg!r} after reset: {exc!r}")
+
+
+def _install_persistence_hooks():
+    for hook_name in ("load_factory_preferences_post", "load_factory_startup_post"):
+        hook = getattr(bpy.app.handlers, hook_name, None)
+        if hook is None:
+            continue
+        if _re_enable_after_reset not in hook:
+            hook.append(_re_enable_after_reset)
+
+
 def register():
     for cls in _CLASSES:
         bpy.utils.register_class(cls)
     bpy.app.timers.register(_autostart, first_interval=0.5)
+    _install_persistence_hooks()
     print("BlenderMCP addon registered")
 
 
 def unregister():
+    # Leave the persistence hooks in place: factory reset disables every add-on
+    # *before* the load_factory_preferences_post handlers run, so removing the
+    # hook here would prevent re-enable. The handler is idempotent, and Blender
+    # garbage-collects stale handler references on the next full reload.
+
     if state.server is not None:
         state.server.stop()
         state.server = None
