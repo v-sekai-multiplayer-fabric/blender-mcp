@@ -1,13 +1,14 @@
 # chibifire-blender-mcp
 
-A Blender addon plus MCP server that lets Claude (and other MCP clients) drive Blender for prompt-assisted modeling, scene construction, and asset import.
+A Blender addon plus MCP server that lets Claude (Hermes Agent, and other MCP clients) drive Blender for prompt-assisted modeling, scene construction, and asset import.
 
-Fork of [BlenderMCP](https://github.com/ahujasid/blender-mcp) by Siddharth Ahuja. Maintained by K. S. Ernest (iFire) Lee.
+Maintained by K. S. Ernest (iFire) Lee. Forked from [BlenderMCP](https://github.com/ahujasid/blender-mcp) by Siddharth Ahuja.
 
 ## Features
 
 - TCP socket server inside Blender; JSON command protocol on port 9876 (configurable)
 - Auto-connects on Blender launch (toggle in addon preferences)
+- Survives factory reset — hooks `load_factory_preferences_post` to re-enable itself automatically
 - Create, modify, delete objects; apply materials; inspect scene and per-object data
 - Run arbitrary Python inside Blender from the client
 - Capture viewport screenshots
@@ -16,14 +17,26 @@ Fork of [BlenderMCP](https://github.com/ahujasid/blender-mcp) by Siddharth Ahuja
 
 ## Architecture
 
-- `/` — Blender addon (Extension format with `blender_manifest.toml`). Hosts the TCP server and dispatches commands.
-  - `__init__.py` — registration entry point
-  - `server.py` — `BlenderMCPServer` core (socket, dispatch, scene/object/screenshot, `execute_code`)
-  - `preferences.py`, `panel.py`, `operators.py`, `state.py`, `common.py`
-  - `integrations/{polyhaven,sketchfab,hyper3d,hunyuan3d}.py` — per-service mixins
-- `blender_mcp/` — FastMCP server. Connects to the addon socket and exposes Blender as MCP tools.
+```
+/                          Blender 4.2+ Extension (blender_manifest.toml)
+|-- __init__.py            Registration, autostart timer, factory-reset persistence
+|-- server.py              BlenderMCPServer — TCP socket, JSON dispatch, scene/object/screenshot
+|-- preferences.py         AddonPreferences (port, autostart, API keys, integration toggles)
+|-- panel.py               VIEW_3D > Sidebar > BlenderMCP UI panel
+|-- operators.py           Start/Stop server, Set Free Trial Key
+|-- state.py               Module-level `server` singleton
+|-- common.py              Shared helpers (get_prefs, requests headers, free-trial key)
+|-- integrations/          Per-service mixin classes
+|   |-- polyhaven.py       PolyhavenMixin (search, download, texture application)
+|   |-- sketchfab.py       SketchfabMixin (search, preview, download with size normalisation)
+|   |-- hyper3d.py         Hyper3DMixin (Rodin MAIN_SITE / FAL_AI job creation + import)
+|   |-- hunyuan3d.py       Hunyuan3DMixin (local / official API job creation + import)
+|-- blender_mcp/           FastMCP server — connects to addon socket, exposes tools
+    |-- __init__.py
+    |-- server.py          FastMCP lifespan, 3D asset gen, PolyHaven/Sketchfab tools
+```
 
-Settings (port, integration toggles, API keys) live in the addon's user preferences, so they survive File > New, Open File, and scene resets.
+Settings live in the addon's user preferences, so they survive File > New, Open File, and scene resets.
 
 ## Install
 
@@ -202,6 +215,10 @@ JSON over TCP. Each command is a JSON object with `type` and optional `params`. 
 - `execute_blender_code` runs arbitrary Python in Blender. Save your work first.
 - Poly Haven downloads assets to disk; disable it in the panel if you don't want that.
 - Complex operations may need to be broken into smaller steps.
+
+## Changelog
+
+See `CHANGELOG.md` for version history.
 
 ## License
 
