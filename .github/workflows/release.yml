@@ -70,6 +70,16 @@ jobs:
           (cd addons && zip -r "../dist/${ZIP_NAME}" blender_mcp_addon -x '*/__pycache__/*' '*.pyc')
           echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
 
+      - name: Build MCP server zip
+        run: |
+          # Self-contained source bundle of the MCP server, for users who grab
+          # it directly instead of installing the wheel from PyPI/uvx.
+          MCP_ZIP="blender_mcp_server-${{ steps.version.outputs.full }}.zip"
+          zip -r "dist/${MCP_ZIP}" \
+            blender_mcp main.py pyproject.toml uv.lock .python-version README.md LICENSE \
+            -x '*/__pycache__/*' '*.pyc'
+          echo "MCP_ZIP=${MCP_ZIP}" >> "$GITHUB_ENV"
+
       - name: List artifacts
         run: ls -la dist/
 
@@ -81,6 +91,7 @@ jobs:
             dist/*.whl
             dist/*.tar.gz
             dist/${{ env.ZIP_NAME }}
+            dist/${{ env.MCP_ZIP }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           prerelease: ${{ steps.version.outputs.is_pre == 'true' }}
