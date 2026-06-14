@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to create (e.g. v2.0.1 or v2.0.1-rc1)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -17,24 +23,31 @@ jobs:
       - name: Resolve version from tag
         id: version
         run: |
-          full="${GITHUB_REF_NAME#v}"
+          # Tag-push uses the pushed ref; manual dispatch uses the typed input.
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          case "$tag" in
+            v*) ;;
+            *) echo "::error::Tag '$tag' must start with 'v' (e.g. v2.0.1)"; exit 1 ;;
+          esac
+          full="${tag#v}"
           base="${full%%-*}"
           if [ "$full" != "$base" ]; then
             is_pre=true
           else
             is_pre=false
           fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "full=$full" >> "$GITHUB_OUTPUT"
           echo "base=$base" >> "$GITHUB_OUTPUT"
           echo "is_pre=$is_pre" >> "$GITHUB_OUTPUT"
-          echo "Tag: $GITHUB_REF_NAME -> full=$full, base=$base, prerelease=$is_pre"
+          echo "Tag: $tag -> full=$full, base=$base, prerelease=$is_pre"
 
       - name: Verify base version matches manifests
         run: |
           base='${{ steps.version.outputs.base }}'
           pyver=$(grep -E '^version[[:space:]]*=' pyproject.toml | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
-          manver=$(grep -E '^version[[:space:]]*=' src/blender_mcp_addon/blender_manifest.toml | sed -E 's/.*"([^"]+)".*/\1/')
-          blver=$(python3 -c "import re; m=re.search(r'\"version\":\s*\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)', open('src/blender_mcp_addon/__init__.py').read()); print('.'.join(m.groups()))")
+          manver=$(grep -E '^version[[:space:]]*=' addons/blender_mcp_addon/blender_manifest.toml | sed -E 's/.*"([^"]+)".*/\1/')
+          blver=$(python3 -c "import re; m=re.search(r'\"version\":\s*\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)', open('addons/blender_mcp_addon/__init__.py').read()); print('.'.join(m.groups()))")
           echo "base=$base  pyproject=$pyver  manifest=$manver  bl_info=$blver"
           if [ "$base" != "$pyver" ] || [ "$base" != "$manver" ] || [ "$base" != "$blver" ]; then
             echo "::error::Tag base version ($base) does not match pyproject/manifest/bl_info"
@@ -54,7 +67,7 @@ jobs:
       - name: Build Blender addon zip
         run: |
           ZIP_NAME="blender_mcp_addon-${{ steps.version.outputs.full }}.zip"
-          (cd src && zip -r "../dist/${ZIP_NAME}" blender_mcp_addon -x '*/__pycache__/*' '*.pyc')
+          (cd addons && zip -r "../dist/${ZIP_NAME}" blender_mcp_addon -x '*/__pycache__/*' '*.pyc')
           echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
 
       - name: List artifacts
@@ -63,6 +76,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
           files: |
             dist/*.whl
             dist/*.tar.gz

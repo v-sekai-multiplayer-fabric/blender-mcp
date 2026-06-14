@@ -59,20 +59,20 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 #### 1. Build the addon zip
 
-Clone this repo, then zip the package directory:
+Clone this repo, then zip the add-on package directory under `addons/`:
 
 macOS / Linux:
 ```bash
 git clone https://github.com/chibifire/chibifire-blender-mcp
-cd chibifire-blender-mcp
-zip -r ../blender_mcp_addon.zip .
+cd chibifire-blender-mcp/addons
+zip -r ../blender_mcp_addon.zip blender_mcp_addon -x '*/__pycache__/*' '*.pyc'
 ```
 
 Windows (PowerShell):
 ```powershell
 git clone https://github.com/chibifire/chibifire-blender-mcp
-cd chibifire-blender-mcp
-Compress-Archive -Path * -DestinationPath ..\blender_mcp_addon.zip
+cd chibifire-blender-mcp\addons
+Compress-Archive -Path blender_mcp_addon -DestinationPath ..\blender_mcp_addon.zip
 ```
 
 The result is `blender_mcp_addon.zip` at the repo root.
