@@ -21,7 +21,7 @@ from .server import BlenderMCPServer
 bl_info = {
     "name": "Blender MCP",
     "author": "BlenderMCP",
-    "version": (2, 0, 0),
+    "version": (2, 0, 1),
     "blender": (3, 0, 0),
     "location": "View3D > Sidebar > BlenderMCP",
     "description": "Connect Blender to Claude via MCP",
