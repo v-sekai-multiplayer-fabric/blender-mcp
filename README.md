@@ -1,6 +1,6 @@
 # chibifire-blender-mcp
 
-A Blender addon plus MCP server that lets Claude (Hermes Agent, and other MCP clients) drive Blender for prompt-assisted modeling, scene construction, and asset import.
+A Blender addon plus MCP server that lets Claude (Hermes Agent, and other MCP clients) drive Blender for prompt-assisted modeling and scene construction.
 
 Maintained by K. S. Ernest (iFire) Lee. Forked from [BlenderMCP](https://github.com/ahujasid/blender-mcp) by Siddharth Ahuja.
 
@@ -12,29 +12,11 @@ Maintained by K. S. Ernest (iFire) Lee. Forked from [BlenderMCP](https://github.
 - Create, modify, delete objects; apply materials; inspect scene and per-object data
 - Run arbitrary Python inside Blender from the client
 - Capture viewport screenshots
-- Optional asset integrations: Poly Haven, Sketchfab, Hyper3D Rodin, Tencent Hunyuan 3D
-- No telemetry. The addon makes no outbound HTTP requests unless you opt into an asset integration
+- No telemetry and no outbound HTTP requests — the addon only opens a local socket for the MCP bridge
 
 ## Architecture
 
-```
-/                          Blender 4.2+ Extension (blender_manifest.toml)
-|-- __init__.py            Registration, autostart timer, factory-reset persistence
-|-- server.py              BlenderMCPServer — TCP socket, JSON dispatch, scene/object/screenshot
-|-- preferences.py         AddonPreferences (port, autostart, API keys, integration toggles)
-|-- panel.py               VIEW_3D > Sidebar > BlenderMCP UI panel
-|-- operators.py           Start/Stop server, Set Free Trial Key
-|-- state.py               Module-level `server` singleton
-|-- common.py              Shared helpers (get_prefs, requests headers, free-trial key)
-|-- integrations/          Per-service mixin classes
-|   |-- polyhaven.py       PolyhavenMixin (search, download, texture application)
-|   |-- sketchfab.py       SketchfabMixin (search, preview, download with size normalisation)
-|   |-- hyper3d.py         Hyper3DMixin (Rodin MAIN_SITE / FAL_AI job creation + import)
-|   |-- hunyuan3d.py       Hunyuan3DMixin (local / official API job creation + import)
-|-- blender_mcp/           FastMCP server — connects to addon socket, exposes tools
-    |-- __init__.py
-    |-- server.py          FastMCP lifespan, 3D asset gen, PolyHaven/Sketchfab tools
-```
+The repo has two halves: a Blender 4.2+ extension (`addons/blender_mcp_addon/`) that runs a TCP socket server inside Blender, and a FastMCP server (`blender_mcp/`) that connects to that socket and exposes the tools to an MCP client.
 
 Settings live in the addon's user preferences, so they survive File > New, Open File, and scene resets.
 
@@ -95,7 +77,7 @@ Open **Edit > Preferences > Add-ons > Blender MCP** for full settings, or use th
 
 #### Updating
 
-To upgrade, repeat steps 1–2 with a fresh clone (or `git pull` and re-zip). Blender replaces the existing install. Your preferences (port, integration toggles, API keys) are stored per-user and survive reinstalls.
+To upgrade, repeat steps 1–2 with a fresh clone (or `git pull` and re-zip). Blender replaces the existing install. Your preferences (port, autostart) are stored per-user and survive reinstalls.
 
 #### Uninstall
 
@@ -179,8 +161,7 @@ Run only one MCP server at a time. If both Cursor and Claude Desktop launch one,
 ![BlenderMCP in the sidebar](assets/addon-instructions.png)
 
 1. Enable the addon. The MCP server starts automatically on the configured port (default 9876). To opt out of autostart, uncheck **Auto-connect on Blender launch** in the addon preferences.
-2. In the 3D View sidebar (`N`) under **BlenderMCP**, toggle whichever asset integrations you want.
-3. Start your MCP client. Tools appear under the hammer icon.
+2. Start your MCP client. Tools appear under the hammer icon.
 
 To stop or restart the server manually, use the **Disconnect from MCP server** / **Connect to MCP server** button in the BlenderMCP panel.
 
@@ -189,21 +170,16 @@ To stop or restart the server manually, use the **Disconnect from MCP server** /
 ### What you can ask Claude to do
 
 - "Create a low-poly dungeon scene with a dragon guarding gold"
-- "Build a beach scene using Poly Haven HDRIs, rocks, and vegetation"
+- "Build a low-poly forest with scattered trees, rocks, and a path"
 - "Make this car red and metallic"
-- "Generate a garden gnome through Hyper3D"
+- "Model a procedural spiral staircase with 12 steps"
 - "Get the current scene info and render it as a three.js sketch"
 - "Point the camera at the scene and make it isometric"
-
-## Hyper3D
-
-A free-trial key is bundled and limits generations per day. For higher limits, get your own key from hyper3d.ai or fal.ai and paste it into the Hyper3D API Key field.
 
 ## Troubleshooting
 
 - **No connection.** Confirm the panel reads "Disconnect from MCP server" (server is up). If it reads "Connect", autostart was disabled or the previous start failed — click it. Confirm your MCP client is configured. Do not run `uvx ... blender-mcp` manually in a terminal; the client launches it.
 - **Timeouts.** Break the request into smaller steps.
-- **Poly Haven flakiness.** Claude is sometimes erratic about choosing assets; restate the request.
 - **Persistent failures.** Restart Blender and the MCP client.
 
 ## Protocol
@@ -213,7 +189,6 @@ JSON over TCP. Each command is a JSON object with `type` and optional `params`. 
 ## Caveats
 
 - `execute_blender_code` runs arbitrary Python in Blender. Save your work first.
-- Poly Haven downloads assets to disk; disable it in the panel if you don't want that.
 - Complex operations may need to be broken into smaller steps.
 
 ## Changelog
