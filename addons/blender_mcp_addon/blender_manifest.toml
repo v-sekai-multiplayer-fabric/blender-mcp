@@ -20,5 +20,5 @@ copyright = [
 ]
 
 [permissions]
-network = "Optional Poly Haven, Sketchfab, Hyper3D Rodin, and Tencent Hunyuan 3D integrations"
+network = "Socket connection for the blender-mcp MCP bridge"
 files = "Downloading assets and importing them into the scene"

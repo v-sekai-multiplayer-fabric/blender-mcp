@@ -9,21 +9,8 @@ from contextlib import redirect_stdout
 import bpy
 import mathutils
 
-from .common import get_prefs
-from .integrations import (
-    Hunyuan3DMixin,
-    Hyper3DMixin,
-    PolyhavenMixin,
-    SketchfabMixin,
-)
 
-
-class BlenderMCPServer(
-    PolyhavenMixin,
-    Hyper3DMixin,
-    SketchfabMixin,
-    Hunyuan3DMixin,
-):
+class BlenderMCPServer:
     def __init__(self, host='localhost', port=9876):
         self.host = host
         self.port = port
@@ -185,58 +172,13 @@ class BlenderMCPServer(
         cmd_type = command.get("type")
         params = command.get("params", {})
 
-        # Add a handler for checking PolyHaven status
-        if cmd_type == "get_polyhaven_status":
-            return {"status": "success", "result": self.get_polyhaven_status()}
-
         # Base handlers that are always available
         handlers = {
             "get_scene_info": self.get_scene_info,
             "get_object_info": self.get_object_info,
             "get_viewport_screenshot": self.get_viewport_screenshot,
             "execute_code": self.execute_code,
-            "get_polyhaven_status": self.get_polyhaven_status,
-            "get_hyper3d_status": self.get_hyper3d_status,
-            "get_sketchfab_status": self.get_sketchfab_status,
-            "get_hunyuan3d_status": self.get_hunyuan3d_status,
         }
-
-        # Add Polyhaven handlers only if enabled
-        if get_prefs().blendermcp_use_polyhaven:
-            polyhaven_handlers = {
-                "get_polyhaven_categories": self.get_polyhaven_categories,
-                "search_polyhaven_assets": self.search_polyhaven_assets,
-                "download_polyhaven_asset": self.download_polyhaven_asset,
-                "set_texture": self.set_texture,
-            }
-            handlers.update(polyhaven_handlers)
-
-        # Add Hyper3d handlers only if enabled
-        if get_prefs().blendermcp_use_hyper3d:
-            hyper3d_handlers = {
-                "create_rodin_job": self.create_rodin_job,
-                "poll_rodin_job_status": self.poll_rodin_job_status,
-                "import_generated_asset": self.import_generated_asset,
-            }
-            handlers.update(hyper3d_handlers)
-
-        # Add Sketchfab handlers only if enabled
-        if get_prefs().blendermcp_use_sketchfab:
-            sketchfab_handlers = {
-                "search_sketchfab_models": self.search_sketchfab_models,
-                "get_sketchfab_model_preview": self.get_sketchfab_model_preview,
-                "download_sketchfab_model": self.download_sketchfab_model,
-            }
-            handlers.update(sketchfab_handlers)
-
-        # Add Hunyuan3d handlers only if enabled
-        if get_prefs().blendermcp_use_hunyuan3d:
-            hunyuan_handlers = {
-                "create_hunyuan_job": self.create_hunyuan_job,
-                "poll_hunyuan_job_status": self.poll_hunyuan_job_status,
-                "import_generated_asset_hunyuan": self.import_generated_asset_hunyuan
-            }
-            handlers.update(hunyuan_handlers)
 
         handler = handlers.get(cmd_type)
         if handler:
