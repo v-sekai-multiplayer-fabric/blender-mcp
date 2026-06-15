@@ -8,7 +8,6 @@ import bpy
 
 from . import state
 from .operators import (
-    BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey,
     BLENDERMCP_OT_StartServer,
     BLENDERMCP_OT_StopServer,
 )
@@ -31,7 +30,6 @@ bl_info = {
 _CLASSES = (
     BlenderMCPPreferences,
     BLENDERMCP_PT_Panel,
-    BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey,
     BLENDERMCP_OT_StartServer,
     BLENDERMCP_OT_StopServer,
 )
